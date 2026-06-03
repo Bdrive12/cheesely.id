@@ -3,461 +3,490 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cheesely.id - Premium Basque Cheesecake</title>
+    <title>Sistem Administrasi Toserba Enak - Firebase Realtime Edition</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
     <style>
-        :root {
-            --primary: #d4af37;
-            --dark: #1a1a1a;
-            --light: #f9f9f9;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--light); color: var(--dark); padding-bottom: 30px; }
-        
-        /* Navbar - Disederhanakan untuk Mobile */
-        header { background: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
-        .logo-box h1 { font-size: 22px; color: var(--dark); font-weight: 800; }
-        .logo-box span { color: var(--primary); }
-        
-        button { cursor: pointer; border: none; padding: 10px 18px; border-radius: 25px; font-weight: 600; transition: 0.2s; }
-        .btn-cart { background: var(--dark); color: white; }
-        .btn-admin-trigger { background: #333; color: #fff; width: 100%; max-width: 300px; margin: 10px auto; display: block; }
-        
-        /* Main Layout */
-        .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
-        .hero { text-align: center; margin-bottom: 25px; }
-        .hero h2 { font-size: 26px; margin-bottom: 5px; }
-        #admin-badge { display: none; background: #ff3b30; color: white; padding: 5px 12px; border-radius: 15px; font-size: 12px; width: max-content; margin: 10px auto; }
-
-        /* Catalog Grid - Rasio 9:16 Ramah */
-        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
-        .product-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #eee; }
-        .product-img-box { width: 100%; height: 180px; background: #f0f0f0; border-radius: 8px; margin-bottom: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-        .product-img-box img { width: 100%; height: 100%; object-fit: cover; }
-        .product-img-placeholder { font-weight: 700; color: #aaa; letter-spacing: 1px; font-size: 12px; }
-        .product-name { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
-        .product-price { color: var(--primary); font-weight: 700; font-size: 15px; margin-bottom: 12px; }
-        .btn-add { background: var(--primary); color: white; width: 100%; padding: 12px; border-radius: 8px; }
-        .btn-add:hover { background: #b8952e; }
-        .btn-edit-admin { background: #007bff; color: white; width: 100%; padding: 8px; border-radius: 8px; margin-top: 8px; font-size: 13px; }
-
-        /* Cart Overlay - DIUBAH JADI BOTTOM FULL DI MOBILE AGAR TIDAK NYEMPIL */
-        .cart-overlay { position: fixed; bottom: -100%; left: 0; width: 100%; height: 100%; background: white; box-shadow: 0 -5px 25px rgba(0,0,0,0.15); z-index: 200; transition: 0.4s ease; display: flex; flex-direction: column; }
-        .cart-overlay.active { bottom: 0; }
-        .cart-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fff; }
-        .cart-body { flex: 1; overflow-y: auto; padding: 15px 20px; }
-        .cart-footer { padding: 20px; border-top: 1px solid #eee; background: #fafafa; box-shadow: 0 -2px 10px rgba(0,0,0,0.02); }
-        
-        .cart-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f1f1f1; }
-        .cart-item-info { flex: 1; min-width: 0; }
-        .cart-item-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .cart-item-price { color: #666; font-size: 12px; }
-        .quantity-control { display: flex; align-items: center; gap: 6px; margin: 0 10px; }
-        .btn-qty { background: #e0e0e0; width: 28px; height: 28px; padding: 0; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-        .cart-item-subtotal { font-weight: 700; font-size: 14px; min-width: 75px; text-align: right; }
-        
-        /* QRIS Area & Form Rincian Rapih Vertikal */
-        .qris-box { display: none; flex-direction: column; align-items: center; background: #fff; border: 2px dashed #ccc; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
-        .qris-box img { width: 140px; height: 140px; margin-top: 8px; }
-        .checkout-form { display: none; margin-top: 10px; }
-        .checkout-form input, .checkout-form textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
-        .btn-whatsapp { background: #25d366; color: white; width: 100%; padding: 12px; font-size: 15px; border-radius: 8px; margin-top: 5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-
-        /* Admin Section Di Bawah Banget */
-        .footer-admin-zone { margin-top: 60px; padding-top: 25px; border-top: 2px dashed #ddd; text-align: center; background: #f0f0f0; padding: 20px; border-radius: 12px; }
-        #globalAdminPanel { display: none; background: #fff; border-top: 5px solid var(--primary); padding: 20px; margin-top: 20px; border-radius: 8px; text-align: left; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
-        .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
-
-        /* Modals */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 300; align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-        .btn-cancel { background: #ccc; color: #333; }
-        .btn-confirm { background: var(--dark); color: white; }
+        .login-container { max-width: 400px; margin: 80px auto; }
+        .btn-tab.active { background-color: #0dcaf0 !important; color: #000 !important; font-weight: bold; }
+        .sticky-top { top: 0; z-index: 1020; }
+        .chart-container { max-width: 100%; height: 280px; margin-top: 15px; }
+        .status-firebase { font-size: 11px; font-weight: bold; }
     </style>
 </head>
-<body>
+<body class="bg-light">
 
-    <header>
-        <div class="logo-box">
-            <h1>cheesely<span>.id</span></h1>
+<div id="screen-login" class="container">
+    <div class="card login-container shadow border-0">
+        <div class="card-header bg-dark text-white text-center py-3">
+            <h5 class="m-0 fw-bold"><i class="fa-solid fa-user-lock text-warning me-2"></i>Toserba Enak</h5>
+            <small class="text-muted">Firebase Cloud Admin Gate</small>
         </div>
-        <div class="nav-buttons">
-            <button class="btn-cart" id="cart-counter" onclick="toggleCart(true)">Keranjang (0)</button>
+        <div class="card-body p-4">
+            <div id="login-alert" class="alert alert-danger d-none small">
+                <i class="fa-solid fa-triangle-exclamation me-1"></i> Username / Password salah!
+            </div>
+            <form id="formLogin" onsubmit="prosesLogin(event)">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Username Admin</label>
+                    <input type="text" id="username" class="form-control form-control-sm" placeholder="adminenakkkk" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Password Security</label>
+                    <input type="password" id="password" class="form-control form-control-sm" placeholder="toserba2026" required>
+                </div>
+                <button type="submit" class="btn btn-dark btn-sm w-100 fw-bold">Masuk ke Sistem <i class="fa-solid fa-right-to-bracket ms-1"></i></button>
+            </form>
         </div>
-    </header>
+    </div>
+</div>
 
-    <div class="container">
-        <div class="hero">
-            <h2 id="page-title">Freshly Baked Basque</h2>
-            <div id="admin-badge">MODE ADMINISTRATOR AKTIF</div>
+<div id="screen-main" class="d-none">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm mb-4">
+        <div class="container-fluid px-4">
+            <span class="navbar-brand fw-bold">
+                <i class="fa-solid fa-shop text-info me-2"></i>Toserba Enak 
+                <span class="badge bg-success status-firebase ms-1"><i class="fa-solid fa-cloud shadow-sm"></i> Firebase Connected</span>
+            </span>
+            <div class="navbar-nav ms-auto flex-row gap-2">
+                <button class="nav-link btn-tab active" onclick="bukaTab('dashboard')"><i class="fa-solid fa-chart-pie me-1"></i> Utama</button>
+                <button class="nav-link btn-tab" onclick="bukaTab('surat')"><i class="fa-solid fa-envelope me-1"></i> Surat</button>
+                <button class="nav-link btn-tab" onclick="bukaTab('memo')"><i class="fa-solid fa-file-lines me-1"></i> Memo</button>
+                <button class="nav-link btn-tab" onclick="bukaTab('absen')"><i class="fa-solid fa-calendar-check me-1"></i> Absen Ritel Cloud</button>
+                <button class="btn btn-sm btn-outline-danger ms-2" onclick="prosesLogout()"><i class="fa-solid fa-power-off"></i> Keluar</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+
+        <div id="tab-dashboard" class="tab-konten">
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="card bg-primary text-white border-0 shadow-sm">
+                        <div class="card-body p-3 d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title m-0 small">Total Surat Masuk</h6>
+                                <h2 class="fw-bold m-0 mt-1" id="statSuratMasuk">1</h2>
+                            </div>
+                            <i class="fa-solid fa-circle-arrow-down fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-warning text-dark border-0 shadow-sm">
+                        <div class="card-body p-3 d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title m-0 small">Total Surat Keluar</h6>
+                                <h2 class="fw-bold m-0 mt-1" id="statSuratKeluar">0</h2>
+                            </div>
+                            <i class="fa-solid fa-circle-arrow-up fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card border-0 shadow-sm p-4 text-center bg-white">
+                <h4 class="fw-bold text-dark m-0">Selamat Datang di Panel Cloud Toserba Enak</h4>
+                <p class="text-muted small mt-1 mb-0">Semua data absensi ritel otomatis tersimpan secara aman dan realtime di Firebase.</p>
+            </div>
         </div>
 
-        <div class="products-grid" id="products-container"></div>
-
-        <div class="footer-admin-zone">
-            <p style="font-size: 13px; color: #666; margin-bottom: 8px;">Manajemen Internal Cheesely.id</p>
-            <button class="btn-admin-trigger" id="adminBtn" onclick="openGateModal()">Kelola Toko (Admin)</button>
-            
-            <div id="globalAdminPanel">
-                <h3>⚙️ Konfigurasi Sistem Toko</h3>
-                <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Perubahan langsung tersimpan ke Firebase Realtime Database.</p>
-                <div class="form-group">
-                    <label>Nomor WhatsApp Admin (Gunakan format 62...)</label>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="globalWaInput" placeholder="Contoh: 6283121518824">
-                        <button class="btn-confirm" onclick="saveGlobalWa()">Simpan</button>
+        <div id="tab-surat" class="tab-konten d-none">
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-5">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-dark text-white fw-bold small">Pencatatan Surat Baru</div>
+                        <div class="card-body">
+                            <form id="formSurat" onsubmit="tambahSurat(event)">
+                                <div class="mb-2">
+                                    <label class="small fw-bold">Jenis Surat</label>
+                                    <select id="jenisSurat" class="form-select form-select-sm">
+                                        <option value="Masuk">Surat Masuk</option>
+                                        <option value="Keluar">Surat Keluar</option>
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="small fw-bold">Nomor Surat</label>
+                                    <input type="text" id="noSurat" class="form-control form-control-sm" required placeholder="005/SRT/VI/2026">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="small fw-bold">Asal / Tujuan</label>
+                                    <input type="text" id="kontakSurat" class="form-control form-control-sm" required placeholder="PT. Maju Jaya">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="small fw-bold">Perihal</label>
+                                    <input type="text" id="perihalSurat" class="form-control form-control-sm" required placeholder="Undangan Rapat">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm w-100">Simpan Surat</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8 col-md-7">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-secondary text-white fw-bold small">Arsip Log Surat</div>
+                        <div class="card-body table-responsive p-0">
+                            <table class="table table-sm table-striped m-0 align-middle">
+                                <thead class="table-dark text-uppercase" style="font-size: 11px;">
+                                    <tr><th>Jenis</th><th>No. Surat</th><th>Asal/Tujuan</th><th>Perihal</th></tr>
+                                </thead>
+                                <tbody id="tabelSurat" style="font-size: 13px;">
+                                    <tr><td><span class="badge bg-success">Masuk</span></td><td>001/SM/2026</td><td>Kementerian Pusat</td><td>Kuota Anggaran</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="cart-overlay" id="cartOverlay">
-        <div class="cart-header">
-            <h3>Keranjang Belanja</h3>
-            <button class="btn-qty" style="background:#ff3b30; color:white; font-weight:bold;" onclick="toggleCart(false)">✕</button>
-        </div>
-        <div class="cart-body" id="cart-items-container"></div>
-        <div class="cart-footer">
-            <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 16px; margin-bottom: 12px;">
-                <span>Total Ringkasan:</span>
-                <span id="grand-total">Rp 0</span>
-            </div>
-
-            <div class="qris-box" id="qris-area">
-                <span style="font-size: 12px; font-weight: 600; color: #555;">Scan QRIS Resmi Cheesely_id</span>
-                <span id="qris-nominal" style="font-size: 16px; font-weight: 700; color: #d4af37; margin: 2px 0;">Rp 0</span>
-                <img id="qris-barcode-img" src="" alt="QRIS Barcode">
-            </div>
-
-            <div class="checkout-form" id="form-area">
-                <input type="text" id="user-name" placeholder="Nama Lengkap Penerima" required>
-                <input type="text" id="user-phone" placeholder="Nomor HP / WhatsApp Aktif" required>
-                <textarea id="user-address" rows="2" placeholder="Alamat Lengkap Pengiriman (Padang & Sekitarnya)" required></textarea>
-                <button class="btn-whatsapp" onclick="sendToWhatsApp()">Kirim Pesanan via WhatsApp ➔</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="gateModal">
-        <div class="modal-content">
-            <h3>Akses Terbatas Admin</h3>
-            <p style="font-size: 14px; color: #555; margin: 10px 0;">Masukkan password manajemen toko:</p>
-            <input type="password" id="adminPasswordInput" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeGateModal()">Batal</button>
-                <button class="btn-confirm" onclick="submitGatePassword()">Masuk</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="editModal">
-        <div class="modal-content">
-            <h3>Ubah Data Produk</h3>
-            <input type="hidden" id="editProductId">
-            <div class="form-group" style="margin-top: 15px;">
-                <label>Nama Varian Kue</label>
-                <input type="text" id="editProductName">
-            </div>
-            <div class="form-group">
-                <label>Harga (Rp)</label>
-                <input type="number" id="editProductPrice">
-            </div>
-            <div class="form-group">
-                <label>URL Gambar Banner Kue</label>
-                <input type="text" id="editProductImg" placeholder="https://link-gambar.com/gambar.jpg">
-            </div>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeEditModal()">Batal</button>
-                <button class="btn-confirm" onclick="submitProductEdit()">Perbarui Data</button>
-            </div>
-        </div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCKtNlMr5NLj8-dYFUHVHTd_-tTyGpQC4U",
-            authDomain: "upload-gambar-93b5d.firebaseapp.com",
-            databaseURL: "https://upload-gambar-93b5d-default-rtdb.firebaseio.com",
-            projectId: "upload-gambar-93b5d",
-            storageBucket: "upload-gambar-93b5d.firebasestorage.app",
-            messagingSenderId: "1023138864386",
-            appId: "1:1023138864386:web:79b78fa01d5f138226b61b",
-            measurementId: "G-R4EXJLQ8SS"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        const DEFAULT_WHATSAPP = "6283121518824"; 
-        const ADMIN_PASSWORD = "cheesely123"; 
-        let isAdminMode = false;
-        const MY_QRIS_STRING = "00020101021126610014COM.GO-JEK.WWW01189360091431059853890210G1059853890303UMI51440014ID.CO.QRIS.WWW0215ID10265149406040303UMI5204581253033605802ID5911Cheesely_id6006PADANG61052516362070703A016304829E";
-
-        const defaultProducts = [
-            { id: 1, name: "Velvet Berry Basque", price: 45000, img: "" },
-            { id: 2, name: "Lotus Biscoff Crunch", price: 48000, img: "" },
-            { id: 3, name: "Intense Cocoa-Straw", price: 50000, img: "" },
-            { id: 4, name: "Original Charred Gold", price: 40000, img: "" },
-            { id: 5, name: "Speculoos Bliss Mini", price: 47000, img: "" },
-            { id: 6, name: "Dark Crown Special", price: 52000, img: "" }
-        ];
-
-        window.products = [];
-        window.currentAdminWa = DEFAULT_WHATSAPP;
-        window.cart = []; 
-
-        function listenToFirebaseData() {
-            const productsRef = ref(db, 'cheesely/products');
-            onValue(productsRef, (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    window.products = data;
-                } else {
-                    window.products = [...defaultProducts];
-                    set(ref(db, 'cheesely/products'), defaultProducts);
-                }
-                renderCatalog();
-                renderCart();
-            });
-
-            const waRef = ref(db, 'cheesely/admin_wa');
-            onValue(waRef, (snapshot) => {
-                const waData = snapshot.val();
-                window.currentAdminWa = waData ? waData : DEFAULT_WHATSAPP;
-                const waInputEl = document.getElementById('globalWaInput');
-                if (waInputEl) waInputEl.value = window.currentAdminWa;
-            });
-        }
-
-        function pushProductsToFirebase() {
-            set(ref(db, 'cheesely/products'), window.products)
-                .then(() => alert("Katalog sukses disimpan!"))
-                .catch((err) => alert("Gagal menyimpan: " + err.message));
-        }
-
-        window.openGateModal = function() {
-            if (!isAdminMode) {
-                document.getElementById('adminPasswordInput').value = "";
-                document.getElementById('gateModal').style.display = 'flex';
-            } else {
-                isAdminMode = false;
-                document.getElementById("adminBtn").innerText = "Kelola Toko (Admin)";
-                document.getElementById("page-title").innerText = "Freshly Baked Basque";
-                document.getElementById("admin-badge").style.display = 'none';
-                document.getElementById("globalAdminPanel").style.display = 'none';
-                alert("Keluar dari mode manajemen.");
-                renderCatalog();
-            }
-        }
-
-        window.closeGateModal = function() {
-            document.getElementById('gateModal').style.display = 'none';
-        }
-
-        window.submitGatePassword = function() {
-            const typedPassword = document.getElementById('adminPasswordInput').value;
-            if (typedPassword === ADMIN_PASSWORD) {
-                isAdminMode = true;
-                closeGateModal();
-                alert("Akses Manajemen Terverifikasi!");
-                document.getElementById("adminBtn").innerText = "Keluar dari Mode Admin";
-                document.getElementById("page-title").innerText = "⚙️ Mode Manajemen Katalog";
-                document.getElementById("admin-badge").style.display = 'block';
-                document.getElementById("globalAdminPanel").style.display = 'block';
-                renderCatalog();
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-            } else {
-                alert("Password salah!");
-            }
-        }
-
-        window.saveGlobalWa = function() {
-            const inputWa = document.getElementById('globalWaInput').value.trim();
-            let cleanWa = inputWa.replace(/[^0-9]/g, ''); 
-            if (cleanWa.startsWith('0')) cleanWa = '62' + cleanWa.substring(1);
-
-            if (cleanWa.length < 10) {
-                alert("Format nomor WA tidak valid!");
-                return;
-            }
-            set(ref(db, 'cheesely/admin_wa'), cleanWa)
-                .then(() => alert(`Nomor WA diubah ke: ${cleanWa}`));
-        }
-
-        window.openEditModal = function(productId) {
-            const product = window.products.find(p => p.id === productId);
-            if (!product) return;
-            document.getElementById('editProductId').value = product.id;
-            document.getElementById('editProductName').value = product.name;
-            document.getElementById('editProductPrice').value = product.price;
-            document.getElementById('editProductImg').value = product.img;
-            document.getElementById('editModal').style.display = 'flex';
-        }
-
-        window.closeEditModal = function() {
-            document.getElementById('editModal').style.display = 'none';
-        }
-
-        window.submitProductEdit = function() {
-            const id = parseInt(document.getElementById('editProductId').value);
-            const name = document.getElementById('editProductName').value.trim();
-            const price = parseInt(document.getElementById('editProductPrice').value);
-            const img = document.getElementById('editProductImg').value.trim();
-
-            if (!name || isNaN(price)) {
-                alert("Data harus diisi secara valid!");
-                return;
-            }
-
-            const product = window.products.find(p => p.id === id);
-            if (product) {
-                product.name = name;
-                product.price = price;
-                product.img = img;
-                closeEditModal();
-                pushProductsToFirebase(); 
-            }
-        }
-
-        window.toggleCart = function(isOpen) {
-            const overlay = document.getElementById('cartOverlay');
-            if (isOpen) overlay.classList.add('active');
-            else overlay.classList.remove('active');
-        }
-
-        window.addToCart = function(productId) {
-            const product = window.products.find(p => p.id === productId);
-            const cartItem = window.cart.find(item => item.id === productId);
-            if (cartItem) cartItem.quantity += 1;
-            else window.cart.push({ ...product, quantity: 1 });
-            renderCart();
-        }
-
-        window.updateQuantity = function(productId, change) {
-            const cartItem = window.cart.find(item => item.id === productId);
-            if (cartItem) {
-                cartItem.quantity += change;
-                if (cartItem.quantity <= 0) {
-                    window.cart = window.cart.filter(item => item.id !== productId);
-                }
-            }
-            renderCart();
-        }
-
-        function renderCatalog() {
-            const container = document.getElementById('products-container');
-            if (!container) return;
-            container.innerHTML = window.products.map(product => {
-                const imageContent = product.img && product.img !== "" 
-                    ? `<img src="${product.img}" alt="${product.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">`
-                    : '';
-                const placeholderDisplay = product.img && product.img !== "" ? 'style="display:none;"' : '';
-
-                return `
-                    <div class="product-card">
-                        <div>
-                            <div class="product-img-box">
-                                ${imageContent}
-                                <div class="product-img-placeholder" ${placeholderDisplay}>CHEESELY ARTISTRY</div>
+        <div id="tab-memo" class="tab-konten d-none">
+            <div class="row g-4">
+                <div class="col-lg-5 col-md-6">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-info text-white fw-bold small">Generator Memo Internal</div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <label class="small fw-bold">Pengirim & Jabatan</label>
+                                <input type="text" id="memoDari" class="form-control form-control-sm" value="Ahmad Subarjo (Direktur)">
                             </div>
-                            <div class="product-name">${product.name}</div>
-                            <div class="product-price">Rp ${product.price.toLocaleString('id-ID')}</div>
-                        </div>
-                        <div>
-                            <button class="btn-add" onclick="addToCart(${product.id})">Tambah</button>
-                            <button class="btn-edit-admin" style="display: ${isAdminMode ? 'block' : 'none'};" onclick="openEditModal(${product.id})">🛠️ Edit Detail</button>
+                            <div class="mb-2">
+                                <label class="small fw-bold">Kepada</label>
+                                <input type="text" id="memoKepada" class="form-control form-control-sm" placeholder="Manajer Operasional">
+                            </div>
+                            <div class="mb-2">
+                                <label class="small fw-bold">Tanggal Memo</label>
+                                <input type="text" id="memoTanggal" class="form-control form-control-sm" value="03 Juni 2026">
+                            </div>
+                            <div class="mb-2">
+                                <label class="small fw-bold">Perihal</label>
+                                <input type="text" id="memoPerihal" class="form-control form-control-sm" placeholder="Tugas Luar Kota">
+                            </div>
+                            <div class="mb-3">
+                                <label class="small fw-bold">Isi Instruksi Memo</label>
+                                <textarea id="memoIsi" class="form-control form-control-sm" rows="6" placeholder="Tulis instruksi disini..."></textarea>
+                            </div>
+                            <button onclick="downloadMemoPDF()" class="btn btn-info btn-sm text-white fw-bold w-100"><i class="fa-solid fa-file-pdf me-1"></i>Download PDF Resmi</button>
                         </div>
                     </div>
-                `;
-            }).join('');
-        }
-
-        function renderCart() {
-            const container = document.getElementById('cart-items-container');
-            const cartCounter = document.getElementById('cart-counter');
-            const grandTotalEl = document.getElementById('grand-total');
-            const qrisArea = document.getElementById('qris-area');
-            const formArea = document.getElementById('form-area');
-            const qrisNominal = document.getElementById('qris-nominal');
-            const qrisBarcodeImg = document.getElementById('qris-barcode-img');
-
-            const totalItems = window.cart.reduce((sum, item) => sum + item.quantity, 0);
-            if (cartCounter) cartCounter.innerText = `Keranjang (${totalItems})`;
-
-            if (window.cart.length === 0) {
-                if (container) container.innerHTML = '<p style="color:#888; text-align:center; margin-top:20px;">Keranjang kosong.</p>';
-                if (grandTotalEl) grandTotalEl.innerText = 'Rp 0';
-                if (qrisArea) qrisArea.style.display = 'none';
-                if (formArea) formArea.style.display = 'none';
-                return;
-            }
-
-            if (qrisArea) qrisArea.style.display = 'flex';
-            if (formArea) formArea.style.display = 'block';
-            let grandTotal = 0;
-
-            if (container) {
-                container.innerHTML = window.cart.map(item => {
-                    const currentMaster = window.products.find(p => p.id === item.id);
-                    const price = currentMaster ? currentMaster.price : item.price;
-                    const subtotal = price * item.quantity;
-                    grandTotal += subtotal;
-
-                    return `
-                        <div class="cart-item">
-                            <div class="cart-item-info">
-                                <div class="cart-item-name">${item.name}</div>
-                                <div class="cart-item-price">@ Rp ${price.toLocaleString('id-ID')}</div>
-                            </div>
-                            <div class="quantity-control">
-                                <button class="btn-qty" onclick="updateQuantity(${item.id}, -1)">-</button>
-                                <div>${item.quantity}</div>
-                                <button class="btn-qty" onclick="updateQuantity(${item.id}, 1)">+</button>
-                            </div>
-                            <div class="cart-item-subtotal">Rp ${subtotal.toLocaleString('id-ID')}</div>
+                </div>
+                <div class="col-lg-7 col-md-6">
+                    <div class="card shadow-sm p-4 bg-white border-0" style="border-top: 4px solid #0dcaf0; min-height: 430px; position: sticky; top: 20px;">
+                        <div class="text-center mb-2">
+                            <h5 class="fw-bold m-0 tracking-wide">MEMORANDUM</h5>
+                            <hr class="my-2" style="border-top: 2px solid #000;">
                         </div>
-                    `;
-                }).join('');
-            }
+                        <div class="row small mb-2">
+                            <div class="col-3 col-xl-2 fw-bold">DARI</div><div class="col-9 col-xl-10" id="vDari">: Ahmad Subarjo (Direktur)</div>
+                            <div class="col-3 col-xl-2 fw-bold">KEPADA</div><div class="col-9" id="vKepada">: -</div>
+                            <div class="col-3 col-xl-2 fw-bold">TANGGAL</div><div class="col-9" id="vTanggal">: 03 Juni 2026</div>
+                            <div class="col-3 col-xl-2 fw-bold">PERIHAL</div><div class="col-9" id="vPerihal">: -</div>
+                        </div>
+                        <hr class="my-2" style="border-top: 1px dashed #ccc;">
+                        <p id="vIsi" style="white-space: pre-line;" class="text-muted small">Ketik isi memo di sebelah kiri...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            if (grandTotalEl) grandTotalEl.innerText = `Rp ${grandTotal.toLocaleString('id-ID')}`;
-            if (qrisNominal) qrisNominal.innerText = `Rp ${grandTotal.toLocaleString('id-ID')}`;
-            if (qrisBarcodeImg) {
-                qrisBarcodeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(MY_QRIS_STRING)}`;
+        <div id="tab-absen" class="tab-konten d-none">
+            <div class="row g-3">
+                <div class="col-xl-8">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-success text-white fw-bold d-flex justify-content-between align-items-center">
+                            <span><i class="fa-solid fa-cloud-arrow-up me-2"></i>Pencatatan Toko Realtime (Firebase Cloud)</span>
+                            <span class="badge bg-light text-success fw-bold" id="savedStatus"><i class="fa-solid fa-check"></i> Sinkron</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-2 bg-light p-3 rounded mb-3 align-items-end">
+                                <div class="col-6 col-md-4">
+                                    <label class="small fw-bold text-muted mb-1">Pilih Bulan</label>
+                                    <select id="setBulan" class="form-select form-select-sm">
+                                        <option value="0">Januari</option><option value="1">Februari</option>
+                                        <option value="2">Maret</option><option value="3">April</option>
+                                        <option value="4">Mei</option><option value="5" selected>Juni</option>
+                                        <option value="6">Juli</option><option value="7">Agustus</option>
+                                        <option value="8">September</option><option value="9">Oktober</option>
+                                        <option value="10">November</option><option value="11">Desember</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <label class="small fw-bold text-muted mb-1">Ketik Tahun</label>
+                                    <input type="number" id="setTahun" class="form-control form-control-sm" value="2026" min="2020" max="2100">
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <button onclick="bukaDanLoadFirebase()" class="btn btn-success btn-sm w-100 fw-bold"><i class="fa-solid fa-cloud-sun me-1"></i>Tarik Data Firebase</button>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive" style="max-height: 430px;">
+                                <table class="table table-sm table-bordered align-middle m-0">
+                                    <thead class="table-dark sticky-top" style="font-size: 12px;">
+                                        <tr>
+                                            <th style="width: 25%;">Tanggal</th>
+                                            <th style="width: 15%;">Hari</th>
+                                            <th style="width: 60%;">Ketik Nama Karyawan yang TIDAK HADIR / LIBUR</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tabelKalenderRitel" style="font-size: 13px;">
+                                        <tr><td colspan="3" class="text-center text-muted small py-4">Tentukan parameter lalu klik <b>"Tarik Data Firebase"</b>.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-4">
+                    <div class="card shadow-sm border-0 mb-3">
+                        <div class="card-header bg-dark text-white fw-bold small"><i class="fa-solid fa-square-poll-vertical me-2"></i>Live Cloud Summary</div>
+                        <div class="card-body p-0 table-responsive" style="max-height: 200px;">
+                            <table class="table table-sm table-striped m-0 text-center" style="font-size: 12px;">
+                                <thead class="table-secondary fw-bold">
+                                    <tr><th>Nama Staff</th><th>Total Mangkir/Libur</th></tr>
+                                </thead>
+                                <tbody id="tabelReportAbsen">
+                                    <tr><td colspan="2" class="text-muted py-3">Belum ada data di awan.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-secondary text-white fw-bold small"><i class="fa-solid fa-chart-bar me-2"></i>Grafik Statistik Realtime</div>
+                        <div class="card-body bg-white p-2">
+                            <div class="chart-container">
+                                <canvas id="chartAbsenRitel"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // =========================================================================
+    // 🎛️ 1. FIREBASE CONFIGURATION INJECTED SUCCESSFULLY
+    // =========================================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyBEafF9NJQZMVaC0H1uKWkvSESOuCg8nIs",
+        authDomain: "toserba-enak.firebaseapp.com",
+        databaseURL: "https://toserba-enak-default-rtdb.firebaseio.com",
+        projectId: "toserba-enak",
+        storageBucket: "toserba-enak.firebasestorage.app",
+        messagingSenderId: "915285236417",
+        appId: "1:915285236417:web:dfb4d2d6cecc85f5fcd240",
+        measurementId: "G-FLMF462XNP"
+    };
+    
+    // Inisialisasi Instansi Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // --- SECURITY LOGIN GATE ---
+    if(sessionStorage.getItem('isAdminLoggedIn') === 'true') {
+        document.getElementById('screen-login').classList.add('d-none');
+        document.getElementById('screen-main').classList.remove('d-none');
+    }
+    function prosesLogin(e) {
+        e.preventDefault();
+        if(document.getElementById('username').value === "adminenakkkk" && document.getElementById('password').value === "toserba2026") {
+            sessionStorage.setItem('isAdminLoggedIn', 'true');
+            document.getElementById('screen-login').classList.add('d-none');
+            document.getElementById('screen-main').classList.remove('d-none');
+        } else { document.getElementById('login-alert').classList.remove('d-none'); }
+    }
+    function prosesLogout() { sessionStorage.removeItem('isAdminLoggedIn'); window.location.reload(); }
+
+    // --- TAB CONTROLLER ---
+    function bukaTab(namaTab) {
+        document.querySelectorAll('.tab-konten').forEach(el => el.classList.add('d-none'));
+        document.querySelectorAll('.btn-tab').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + namaTab).classList.remove('d-none');
+        event.currentTarget.classList.add('active');
+    }
+
+    // --- CORESPONDENCE SURAT STATIC LOGIC ---
+    let countMasuk = 1, countKeluar = 0;
+    function tambahSurat(e) {
+        e.preventDefault();
+        const jenis = document.getElementById('jenisSurat').value;
+        const color = jenis === 'Masuk' ? 'bg-success' : 'bg-warning text-dark';
+        document.getElementById('tabelSurat').innerHTML += `<tr>
+            <td><span class="badge ${color}">${jenis}</span></td>
+            <td>${document.getElementById('noSurat').value}</td>
+            <td>${document.getElementById('kontakSurat').value}</td>
+            <td>${document.getElementById('perihalSurat').value}</td>
+        </tr>`;
+        if(jenis === 'Masuk') { countMasuk++; document.getElementById('statSuratMasuk').innerText = countMasuk; }
+        else { countKeluar++; document.getElementById('statSuratKeluar').innerText = countKeluar; }
+        document.getElementById('formSurat').reset();
+    }
+
+    // --- DYNAMIC MEMO GENERATOR ---
+    const ids = ['memoDari', 'memoKepada', 'memoTanggal', 'memoPerihal', 'memoIsi'];
+    ids.forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+            document.getElementById('vDari').innerText = ": " + document.getElementById('memoDari').value;
+            document.getElementById('vKepada').innerText = ": " + (document.getElementById('memoKepada').value || '-');
+            document.getElementById('vTanggal').innerText = ": " + (document.getElementById('memoTanggal').value || '-');
+            document.getElementById('vPerihal').innerText = ": " + (document.getElementById('memoPerihal').value || '-');
+            document.getElementById('vIsi').innerText = document.getElementById('memoIsi').value || 'Ketik isi memo di sebelah kiri...';
+        });
+    });
+    function downloadMemoPDF() {
+        const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
+        doc.setFont("helvetica", "bold").setFontSize(20).text("MEMORANDUM", 105, 20, { align: "center" }).line(20, 25, 190, 25);
+        doc.setFontSize(11).setFont("helvetica", "normal");
+        doc.text(`DARI          : ${document.getElementById('memoDari').value}`, 20, 35);
+        doc.text(`KEPADA      : ${document.getElementById('memoKepada').value || '-'}`, 20, 42);
+        doc.text(`TANGGAL    : ${document.getElementById('memoTanggal').value || '-'}`, 20, 49);
+        doc.text(`PERIHAL      : ${document.getElementById('memoPerihal').value || '-'}`, 20, 56).line(20, 62, 190, 62);
+        doc.text(doc.splitTextToSize(document.getElementById('memoIsi').value || '-', 170), 20, 72);
+        doc.save(`Memo_Toserba.pdf`);
+    }
+
+    // =========================================================================
+    // ☁️ 2. CORE ENGINE: ABSENSI DENGAN FITUR AUTO-SYNC FIREBASE CLOUD
+    // =========================================================================
+    let chartInstance = null;
+
+    function bukaDanLoadFirebase() {
+        const bln = document.getElementById('setBulan').value;
+        const thn = document.getElementById('setTahun').value;
+        
+        const jumlahHari = new Date(thn, parseInt(bln) + 1, 0).getDate();
+        const namaHariIndo = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+        const namaBulanIndo = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        
+        // Buat struktur tabel kosong terlebih dahulu di UI browser
+        let htmlRows = "";
+        for (let h = 1; h <= jumlahHari; h++) {
+            const dateObj = new Date(thn, bln, h);
+            const hariNama = namaHariIndo[dateObj.getDay()];
+            
+            htmlRows += `<tr>
+                <td><strong>${h} ${namaBulanIndo[bln]} ${thn}</strong></td>
+                <td><span class="badge bg-light text-dark border w-100">${hariNama}</span></td>
+                <td>
+                    <input type="text" id="tgl-${h}" class="form-control form-control-sm input-absen-staff" 
+                           placeholder="Contoh: Budi, Sinta (Kosongkan jika masuk semua)" 
+                           oninput="kirimKeFirebase(${h})">
+                </td>
+            </tr>`;
+        }
+        document.getElementById('tabelKalenderRitel').innerHTML = htmlRows;
+
+        // Tarik data yang sudah pernah disimpan di Firebase secara Realtime (.on)
+        const dbRef = db.ref(`absen_ritel/${thn}/${bln}`);
+        dbRef.on('value', (snapshot) => {
+            const dataDariCloud = snapshot.val() || {};
+            
+            // Masukkan data dari Firebase ke kolom-kolom input tabel HTML
+            for (let h = 1; h <= jumlahHari; h++) {
+                const inputElement = document.getElementById(`tgl-${h}`);
+                if(inputElement) {
+                    inputElement.value = dataDariCloud[h] || "";
+                }
             }
+            // Rekalkulasi data rekap & perbarui grafik visual
+            hitungUlangLaporanDanGrafik();
+        });
+    }
+
+    // FUNGSI UNTUK MENEMBAKKAN INPUT DATA KE FIREBASE TIAP KALI ADMIN MENGETIK
+    function kirimKeFirebase(hari) {
+        const bln = document.getElementById('setBulan').value;
+        const thn = document.getElementById('setTahun').value;
+        const isiTeks = document.getElementById(`tgl-${hari}`).value;
+        
+        document.getElementById('savedStatus').innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
+        
+        // Simpan langsung ke struktur node: absen_ritel/TAHUN/BULAN/TANGGAL
+        db.ref(`absen_ritel/${thn}/${bln}/${hari}`).set(isiTeks)
+          .then(() => {
+              document.getElementById('savedStatus').innerHTML = `<i class="fa-solid fa-check"></i> Cloud Sinkron`;
+          });
+    }
+
+    // ENGINE HITUNG UNTUK SUMMARY LAPORAN DAN GRAFIK
+    function hitungUlangLaporanDanGrafik() {
+        const inputs = document.querySelectorAll('.input-absen-staff');
+        let dataRekap = {};
+
+        inputs.forEach(input => {
+            const teks = input.value.trim();
+            if (teks !== "") {
+                const listNama = teks.split(',');
+                listNama.forEach(nama => {
+                    const namaBersih = nama.trim().toUpperCase();
+                    if(namaBersih !== "") {
+                        dataRekap[namaBersih] = (dataRekap[namaBersih] || 0) + 1;
+                    }
+                });
+            }
+        });
+
+        const tbodyReport = document.getElementById('tabelReportAbsen');
+        const keys = Object.keys(dataRekap);
+
+        if(keys.length === 0) {
+            tbodyReport.innerHTML = `<tr><td colspan="2" class="text-muted py-3">Belum ada data di awan.</td></tr>`;
+            updateVisualGrafik([], []);
+            return;
         }
 
-        window.sendToWhatsApp = function() {
-            const name = document.getElementById('user-name').value.trim();
-            const phone = document.getElementById('user-phone').value.trim();
-            const address = document.getElementById('user-address').value.trim();
+        let htmlReport = "";
+        let labelsGrafik = [];
+        let angkaGrafik = [];
 
-            if (!name || !phone || !address) {
-                alert("Harap lengkapi info pengiriman!");
-                return;
+        keys.sort().forEach(namaStaff => {
+            htmlReport += `<tr>
+                <td class="text-start fw-bold text-danger px-3"><i class="fa-solid fa-cloud-sun me-2"></i>${namaStaff}</td>
+                <td><span class="badge bg-danger fs-6">${dataRekap[namaStaff]} Hari</span></td>
+            </tr>`;
+            labelsGrafik.push(namaStaff);
+            angkaGrafik.push(dataRekap[namaStaff]);
+        });
+        tbodyReport.innerHTML = htmlReport;
+        updateVisualGrafik(labelsGrafik, angkaGrafik);
+    }
+
+    // RENDER GRAFIK CHART.JS
+    function updateVisualGrafik(labels, data) {
+        const ctx = document.getElementById('chartAbsenRitel').getContext('2d');
+        if (chartInstance !== null) { chartInstance.destroy(); }
+
+        chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Jumlah Hari Libur / Absen',
+                    data: data,
+                    backgroundColor: 'rgba(25, 135, 84, 0.75)',
+                    borderColor: 'rgba(25, 135, 84, 1)',
+                    borderWidth: 1,
+                    barThickness: 23
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } } },
+                plugins: { legend: { display: false } }
             }
-
-            let orderList = "";
-            let total = 0;
-            window.cart.forEach(item => {
-                const master = window.products.find(p => p.id === item.id);
-                const price = master ? master.price : item.price;
-                orderList += `- ${item.name} (x${item.quantity}) : Rp ${(price * item.quantity).toLocaleString('id-ID')}\n`;
-                total += price * item.quantity;
-            });
-
-            const textMessage = `Halo Cheesely.id, Saya mau pesan Basque Cake!\n\n📋 *DAFTAR PESANAN*:\n${orderList}\n💰 *TOTAL BAYAR*: Rp ${total.toLocaleString('id-ID')}\n\n📍 *DATA PENGIRIMAN*:\n- Nama: ${name}\n- HP/WA: ${phone}\n- Alamat: ${address}\n\n*Catatan*: Saya sudah scan QRIS Resmi. Tolong dikonfirmasi ya!`;
-            const url = `https://api.whatsapp.com/send?phone=${window.currentAdminWa}&text=${encodeURIComponent(textMessage)}`;
-            window.open(url, '_blank');
-        }
-
-        listenToFirebaseData();
-    </script>
+        });
+    }
+</script>
 </body>
 </html>
